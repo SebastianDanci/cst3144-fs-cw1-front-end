@@ -1,47 +1,60 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref, onMounted } from 'vue';
+import LessonListItem from './components/LessonListItem.vue';
+
+const isDarkMode = ref(false);
+
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value;
+  document.body.classList.toggle('dark', isDarkMode.value);
+};
+
+onMounted(() => {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    isDarkMode.value = true;
+    document.body.classList.add('dark');
+  }
+});
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+  <div class="theme-switcher">
+    <button @click="toggleTheme" class="btn">
+      {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
+    </button>
+  </div>
+  <LessonListItem
+    :lesson="{
+      id: 11,
+      subject: 'Music Theory',
+      location: 'Brent Cross',
+      price: 85,
+      spaces: 5,
+      image: 'https://www.redbubble.com/frontend-static/error/artwork.jpg'
+    }"
+  />
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+.theme-switcher {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.btn {
+    height: 42px;
+    padding: 0.5rem 1.5rem;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: bold;
+    background-color: var(--color-primary);
+    color: var(--color-primary-text);
+    transition: var(--transition);
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.btn:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
 }
 </style>
