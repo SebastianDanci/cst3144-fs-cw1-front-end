@@ -10,7 +10,7 @@
                 <p><strong>Spaces Available:</strong> {{ lesson.spaces }}</p>
             </div>
             <div class="lesson-card__actions">
-                <div class="lesson-card__quantity">
+                <div v-if="lesson.reserved > 0" class="lesson-card__quantity">
                     <button
                         class="btn btn-secondary btn-sm"
                         type="button"
@@ -29,13 +29,17 @@
                         +
                     </button>
                 </div>
+
                 <button
+                    v-else-if="lesson.spaces > 0"
                     class="btn btn-primary"
-                    :disabled="lesson.spaces === 0"
+                    type="button"
                     @click="$emit('add-to-cart', lesson.id)"
                 >
-                    {{ lesson.spaces === 0 ? 'Sold Out' : 'Add to Cart' }}
+                    Add to Cart
                 </button>
+
+                <span v-else class="lesson-card__sold-out">Sold Out</span>
             </div>
         </div>
     </article>
@@ -109,6 +113,16 @@ const optimizedImageUrl = computed(() => optimizeImage(props.lesson.image));
     min-width: 2rem;
     text-align: center;
     font-weight: 600;
+}
+
+.lesson-card__sold-out {
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--border-radius);
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .lesson-card__title {
