@@ -1,51 +1,62 @@
 <template>
-  <div class="lesson-list">
-    <LessonListItem 
-      v-for="lesson in lessons" 
-      :key="lesson.id" 
-      :lesson="lesson"
-      @update-quantity="handleUpdateQuantity"
-    />
-  </div>
+  <section class="lesson-list">
+    <p v-if="isLoading" class="lesson-list__status">Loading lessons...</p>
+    <p v-else-if="errorMessage" class="lesson-list__status lesson-list__status--error">
+      {{ errorMessage }}
+    </p>
+    <p v-else-if="!lessons.length" class="lesson-list__status">No lessons match your criteria.</p>
+
+    <div class="lesson-list__grid">
+      <LessonListItem
+        v-for="lesson in lessons"
+        :key="lesson.id"
+        :lesson="lesson"
+        @add-to-cart="$emit('add-to-cart', lesson.id)"
+      />
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
 import LessonListItem from './LessonListItem.vue';
 
-const lessons = ref([]);
-
-const fetchLessons = async () => {
-  try {
-    const response = await fetch('http://localhost:3000/lessons');
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    lessons.value = await response.json();
-  } catch (error) {
-    console.error('There was a problem with the fetch operation:', error);
+defineProps({
+  lessons: {
+    type: Array,
+    default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  },
+  errorMessage: {
+    type: String,
+    default: ''
   }
-};
-
-const handleUpdateQuantity = (payload) => {
-  console.log('Quantity updated:', payload);
-  // Here you can add logic to handle the updated quantity,
-  // for example, by updating a shopping cart.
-};
-
-onMounted(() => {
-  fetchLessons();
 });
+
+defineEmits(['add-to-cart']);
 </script>
 
 <style scoped>
 .lesson-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+}
+
+.lesson-list__status {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--color-text-soft);
+}
+
+.lesson-list__status--error {
+  color: #ef4444;
+}
+
+.lesson-list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
 }
 </style>

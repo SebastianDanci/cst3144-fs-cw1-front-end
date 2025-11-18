@@ -1,15 +1,229 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import LessonList from './components/LessonList.vue';
+import CartPanel from './components/CartPanel.vue';
+
+const API_BASE = 'http://localhost:3000';
 
 const isDarkMode = ref(false);
+const showCart = ref(false);
+const lessons = ref([]);
+const cart = ref([]);
+const searchQuery = ref('');
+const sortField = ref('subject');
+const sortOrder = ref('asc');
+const isLoadingLessons = ref(false);
+const lessonError = ref('');
+const checkoutMessage = ref('');
+const checkoutMessageType = ref('');
+const isSubmitting = ref(false);
 
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value;
   document.body.classList.toggle('dark', isDarkMode.value);
 };
 
+const fetchLessons = async (query = '') => {
+  isLoadingLessons.value = true;
+  lessonError.value = '';
+  try {
+    const endpoint = query
+      ? `${API_BASE}/search?q=${encodeURIComponent(query)}`
+      : `${API_BASE}/lessons`;
+    const response = await fetch(endpoint);
+    if (!response.ok) {
+      throw new Error('Unable to load lessons.');
+    }
+    lessons.value = await response.json();
+  } catch (error) {
+    lessonError.value = error.message || 'Failed to load lessons.';
+  } finally {
+    isLoadingLessons.value = false;
+  }
+};
+
+const decoratedLessons = computed(() => {
+  return lessons.value.map((lesson) => {
+    const cartEntry = cart.value.find((item) => item.lessonId === lesson.id);
+    const reserved = cartEntry ? cartEntry.quantity : 0;
+    return {
+      ...lesson,
+      spaces: Math.max(lesson.spaces - reserved, 0)
+    };
+  });
+});
+
+const sortedLessons = computed(() => {
+  const field = sortField.value;
+  const orderFactor = sortOrder.value === 'asc' ? 1 : -1;
+  return [...decoratedLessons.value].sort((a, b) => {
+    let aValue = a[field];
+    let bValue = b[field];
+
+    if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+    if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+
+    if (aValue < bValue) return -1 * orderFactor;
+    if (aValue > bValue) return 1 * orderFactor;
+    return 0;
+  });
+});
+
+const cartCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
+const cartButtonDisabled = computed(() => cartCount.value === 0 && !showCart.value);
+
+const cartItemsDetailed = computed(() => {
+  return cart.value
+    .map((item) => {
+      const lesson = lessons.value.find((lesson) => lesson.id === item.lessonId);
+      if (!lesson) return null;
+      return {
+        lessonId: item.lessonId,
+        subject: lesson.subject,
+        location: lesson.location,
+        price: lesson.price,
+        image: lesson.image,
+        quantity: item.quantity,
+        maxAvailable: lesson.spaces
+      };
+    })
+    .filter(Boolean);
+});
+
+const cartTotal = computed(() =>
+  cartItemsDetailed.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+);
+
+const addToCart = (lessonId) => {
+  const lesson = lessons.value.find((lesson) => lesson.id === lessonId);
+  if (!lesson) return;
+
+  const existing = cart.value.find((item) => item.lessonId === lessonId);
+  const currentQty = existing ? existing.quantity : 0;
+  if (currentQty >= lesson.spaces) {
+    checkoutMessage.value = 'No more spaces available for this lesson.';
+    checkoutMessageType.value = 'error';
+    return;
+  }
+
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.value.push({ lessonId, quantity: 1 });
+  }
+
+  checkoutMessage.value = '';
+  checkoutMessageType.value = '';
+};
+
+const updateCartQuantity = ({ lessonId, quantity }) => {
+  const lesson = lessons.value.find((lesson) => lesson.id === lessonId);
+  const cartEntry = cart.value.find((item) => item.lessonId === lessonId);
+  if (!lesson || !cartEntry) {
+    return;
+  }
+
+  if (quantity <= 0) {
+    cart.value = cart.value.filter((item) => item.lessonId !== lessonId);
+    return;
+  }
+
+  if (quantity > lesson.spaces) {
+    checkoutMessage.value = `Only ${lesson.spaces} spaces available for ${lesson.subject}.`;
+    checkoutMessageType.value = 'error';
+    return;
+  }
+
+  cartEntry.quantity = quantity;
+};
+
+const removeCartItem = (lessonId) => {
+  cart.value = cart.value.filter((item) => item.lessonId !== lessonId);
+};
+
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+};
+
+const sortOrderLabel = computed(() => (sortOrder.value === 'asc' ? 'Ascending' : 'Descending'));
+
+const toggleCartView = () => {
+  if (cartButtonDisabled.value) {
+    return;
+  }
+  showCart.value = !showCart.value;
+};
+
+let searchTimeoutId;
+watch(searchQuery, (newQuery) => {
+  if (searchTimeoutId) {
+    clearTimeout(searchTimeoutId);
+  }
+  searchTimeoutId = setTimeout(() => fetchLessons(newQuery.trim()), 300);
+});
+
+onUnmounted(() => {
+  if (searchTimeoutId) {
+    clearTimeout(searchTimeoutId);
+  }
+});
+
+const handleCheckout = async ({ name, phone }) => {
+  if (!cart.value.length) {
+    return;
+  }
+
+  checkoutMessage.value = '';
+  checkoutMessageType.value = '';
+  isSubmitting.value = true;
+
+  try {
+    const payload = {
+      name,
+      phone,
+      items: cart.value.map((item) => ({ lessonId: item.lessonId, quantity: item.quantity }))
+    };
+
+    const response = await fetch(`${API_BASE}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.error || 'Unable to submit order.');
+    }
+
+    await Promise.all(
+      payload.items.map(async (item) => {
+        const lesson = lessons.value.find((lesson) => lesson.id === item.lessonId);
+        if (!lesson) return;
+        const updatedSpaces = Math.max(lesson.spaces - item.quantity, 0);
+        lesson.spaces = updatedSpaces;
+        await fetch(`${API_BASE}/lessons/${item.lessonId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spaces: updatedSpaces })
+        });
+      })
+    );
+
+    cart.value = [];
+    checkoutMessage.value = 'Order submitted successfully!';
+    checkoutMessageType.value = 'success';
+    showCart.value = false;
+    await fetchLessons(searchQuery.value.trim());
+  } catch (error) {
+    checkoutMessage.value = error.message || 'Checkout failed.';
+    checkoutMessageType.value = 'error';
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
 onMounted(() => {
+  fetchLessons();
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     isDarkMode.value = true;
     document.body.classList.add('dark');
@@ -18,34 +232,115 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="theme-switcher">
-    <button @click="toggleTheme" class="btn">
-      {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
-    </button>
+  <div class="app-shell">
+    <header class="toolbar">
+      <button @click="toggleTheme" class="btn btn-secondary">
+        {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+      </button>
+
+      <div class="toolbar__controls">
+        <input
+          v-model="searchQuery"
+          type="search"
+          class="input"
+          placeholder="Search lessons..."
+        />
+        <select v-model="sortField" class="input">
+          <option value="subject">Subject</option>
+          <option value="location">Location</option>
+          <option value="price">Price</option>
+          <option value="spaces">Spaces</option>
+        </select>
+        <button class="btn btn-secondary" @click="toggleSortOrder">
+          {{ sortOrderLabel }}
+        </button>
+      </div>
+
+      <button class="btn btn-primary" :disabled="cartButtonDisabled" @click="toggleCartView">
+        Cart ({{ cartCount }})
+      </button>
+    </header>
+
+    <main>
+      <LessonList
+        v-if="!showCart"
+        :lessons="sortedLessons"
+        :is-loading="isLoadingLessons"
+        :error-message="lessonError"
+        @add-to-cart="addToCart"
+      />
+
+      <CartPanel
+        v-else
+        :cart-items="cartItemsDetailed"
+        :total="cartTotal"
+        :checkout-message="checkoutMessage"
+        :checkout-message-type="checkoutMessageType"
+        :is-submitting="isSubmitting"
+        @update-quantity="updateCartQuantity"
+        @remove-item="removeCartItem"
+        @checkout="handleCheckout"
+      />
+    </main>
   </div>
-  <LessonList />
 </template>
 
 <style scoped>
-.theme-switcher {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toolbar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.input {
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 .btn {
-    height: 42px;
-    padding: 0.5rem 1.5rem;
-    border: 1px solid transparent;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-weight: bold;
-    background-color: var(--color-primary);
-    color: var(--color-primary-text);
-    transition: var(--transition);
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--border-radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
 }
 
-.btn:hover:not(:disabled) {
-    background-color: var(--color-primary-hover);
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.btn-secondary {
+  background-color: var(--color-background-mute);
+  color: var(--color-text);
+}
+
+.btn:disabled {
+  background-color: var(--color-disabled);
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+}
+
+main {
+  width: 100%;
 }
 </style>
