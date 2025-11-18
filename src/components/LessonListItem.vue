@@ -1,6 +1,6 @@
 <template>
     <div class="card">
-        <img :src="lesson.image" :alt="lesson.subject" class="card-image" />
+        <img :src="lesson.image" :alt="lesson.subject" class="card-image" loading="lazy" />
         <div class="card-content">
             <h3 class="card-title">{{ lesson.subject }}</h3>
             <p><strong>Location:</strong> {{ lesson.location }}</p>

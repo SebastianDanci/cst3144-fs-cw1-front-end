@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import LessonListItem from './components/LessonListItem.vue';
+import LessonList from './components/LessonList.vue';
 
 const isDarkMode = ref(false);
 
@@ -23,16 +23,7 @@ onMounted(() => {
       {{ isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}
     </button>
   </div>
-  <LessonListItem
-    :lesson="{
-      id: 11,
-      subject: 'Music Theory',
-      location: 'Brent Cross',
-      price: 85,
-      spaces: 5,
-      image: 'https://www.redbubble.com/frontend-static/error/artwork.jpg'
-    }"
-  />
+  <LessonList />
 </template>
 
 <style scoped>
