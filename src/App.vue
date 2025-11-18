@@ -73,6 +73,10 @@ const sortedLessons = computed(() => {
 const cartCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
 const cartButtonDisabled = computed(() => cartCount.value === 0 && !showCart.value);
 
+const availableLessonsCount = computed(() =>
+  decoratedLessons.value.filter((lesson) => lesson.spaces > 0).length
+);
+
 const cartItemsDetailed = computed(() => {
   return cart.value
     .map((item) => {
@@ -254,7 +258,7 @@ onMounted(() => {
       <div class="hero__panel">
         <div class="stat-card">
           <p class="stat-card__label">Available lessons</p>
-          <p class="stat-card__value">{{ lessons.length }}</p>
+          <p class="stat-card__value">{{ availableLessonsCount }}</p>
         </div>
         <div class="stat-card">
           <p class="stat-card__label">Items in cart</p>
