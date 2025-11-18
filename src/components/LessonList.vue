@@ -12,6 +12,7 @@
         :key="lesson.id"
         :lesson="lesson"
         @add-to-cart="$emit('add-to-cart', lesson.id)"
+        @decrement="$emit('decrement-lesson', $event)"
       />
     </div>
   </section>
@@ -35,7 +36,7 @@ defineProps({
   }
 });
 
-defineEmits(['add-to-cart']);
+defineEmits(['add-to-cart', 'decrement-lesson']);
 </script>
 
 <style scoped>

@@ -48,6 +48,7 @@ const decoratedLessons = computed(() => {
     const reserved = cartEntry ? cartEntry.quantity : 0;
     return {
       ...lesson,
+      reserved,
       spaces: Math.max(lesson.spaces - reserved, 0)
     };
   });
@@ -141,17 +142,23 @@ const removeCartItem = (lessonId) => {
   cart.value = cart.value.filter((item) => item.lessonId !== lessonId);
 };
 
-const toggleSortOrder = () => {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+const decrementLessonFromList = (lessonId) => {
+  const cartEntry = cart.value.find((item) => item.lessonId === lessonId);
+  if (!cartEntry) {
+    return;
+  }
+  updateCartQuantity({ lessonId, quantity: cartEntry.quantity - 1 });
 };
-
-const sortOrderLabel = computed(() => (sortOrder.value === 'asc' ? 'Ascending' : 'Descending'));
 
 const toggleCartView = () => {
   if (cartButtonDisabled.value) {
     return;
   }
   showCart.value = !showCart.value;
+};
+
+const closeCartView = () => {
+  showCart.value = false;
 };
 
 let searchTimeoutId;
@@ -233,33 +240,74 @@ onMounted(() => {
 
 <template>
   <div class="app-shell">
-    <header class="toolbar">
-      <button @click="toggleTheme" class="btn btn-secondary">
-        {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
-      </button>
+    <section class="hero">
+      <div class="hero__content">
+        <p class="hero__eyebrow">EZLessons</p>
+        <h1 class="hero__title">Your shortcut to great tutoring</h1>
+        <p class="hero__subtitle">Browse curated lessons, compare prices in real time, and secure your spot in a couple of taps.</p>
+        <div class="hero__actions">
+          <button @click="toggleTheme" class="btn btn-secondary btn-sm">
+            {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+          </button>
+        </div>
+      </div>
+      <div class="hero__panel">
+        <div class="stat-card">
+          <p class="stat-card__label">Available lessons</p>
+          <p class="stat-card__value">{{ lessons.length }}</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-card__label">Items in cart</p>
+          <p class="stat-card__value">{{ cartCount }}</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-card__label">Total ready</p>
+          <p class="stat-card__value">£{{ cartTotal.toFixed(2) }}</p>
+        </div>
+      </div>
+    </section>
 
-      <div class="toolbar__controls">
-        <input
-          v-model="searchQuery"
-          type="search"
-          class="input"
-          placeholder="Search lessons..."
-        />
-        <select v-model="sortField" class="input">
-          <option value="subject">Subject</option>
-          <option value="location">Location</option>
-          <option value="price">Price</option>
-          <option value="spaces">Spaces</option>
-        </select>
-        <button class="btn btn-secondary" @click="toggleSortOrder">
-          {{ sortOrderLabel }}
-        </button>
+    <section class="controls-panel">
+      <div class="controls-panel__field controls-panel__field--grow">
+        <label class="form-field form-field--stretch">
+          <span class="form-field__label">Search</span>
+          <input
+            v-model="searchQuery"
+            type="search"
+            class="input"
+            placeholder="Search by subject, location, or price"
+          />
+        </label>
       </div>
 
-      <button class="btn btn-primary" :disabled="cartButtonDisabled" @click="toggleCartView">
-        Cart ({{ cartCount }})
-      </button>
-    </header>
+      <div class="controls-panel__field">
+        <label class="form-field">
+          <span class="form-field__label">Sort Column</span>
+          <select v-model="sortField" class="input">
+            <option value="subject">Subject</option>
+            <option value="location">Location</option>
+            <option value="price">Price</option>
+            <option value="spaces">Spaces</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="controls-panel__field">
+        <label class="form-field">
+          <span class="form-field__label">Sort Order</span>
+          <select v-model="sortOrder" class="input">
+            <option value="asc">Ascending (A-Z / Low-High)</option>
+            <option value="desc">Descending (Z-A / High-Low)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="controls-panel__field controls-panel__field--align-end">
+        <button class="btn btn-primary controls-panel__cart" :disabled="cartButtonDisabled" @click="toggleCartView">
+          Cart ({{ cartCount }})
+        </button>
+      </div>
+    </section>
 
     <main>
       <LessonList
@@ -268,6 +316,7 @@ onMounted(() => {
         :is-loading="isLoadingLessons"
         :error-message="lessonError"
         @add-to-cart="addToCart"
+        @decrement-lesson="decrementLessonFromList"
       />
 
       <CartPanel
@@ -280,6 +329,7 @@ onMounted(() => {
         @update-quantity="updateCartQuantity"
         @remove-item="removeCartItem"
         @checkout="handleCheckout"
+        @close-cart="closeCartView"
       />
     </main>
   </div>
@@ -292,55 +342,122 @@ onMounted(() => {
   gap: 1.5rem;
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-between;
-  align-items: center;
+.hero {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  background: radial-gradient(circle at top right, var(--color-primary) 0%, transparent 55%),
+    linear-gradient(135deg, var(--color-background-soft), var(--color-background-mute));
+  border: 1px solid var(--color-border);
+  overflow: hidden;
 }
 
-.toolbar__controls {
+.hero__eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-mute);
+}
+
+.hero__title {
+  margin: 0.35rem 0 0.75rem;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 1.15;
+}
+
+.hero__subtitle {
+  color: var(--color-text-soft);
+  max-width: 540px;
+}
+
+.hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  align-items: center;
+  margin-top: 0.5rem;
 }
 
-.input {
-  padding: 0.6rem 0.75rem;
+.hero__panel {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  padding: 0.9rem 1rem;
   border-radius: var(--border-radius);
   border: 1px solid var(--color-border);
   background-color: var(--color-background);
-  color: var(--color-text);
+  box-shadow: var(--shadow);
+  flex: 1 1 150px;
 }
 
-.btn {
-  padding: 0.6rem 1.4rem;
+.stat-card__label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-mute);
+}
+
+.stat-card__value {
+  margin-top: 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.controls-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 1.5rem;
   border-radius: var(--border-radius);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: var(--transition);
-  font-weight: 600;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background-soft);
+  box-shadow: var(--shadow);
 }
 
-.btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-primary-text);
+.controls-panel__field {
+  display: flex;
+  align-items: flex-end;
+  flex: 0 1 220px;
 }
 
-.btn-secondary {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
+.controls-panel__field--grow {
+  flex: 1 1 320px;
+  min-width: 260px;
 }
 
-.btn:disabled {
-  background-color: var(--color-disabled);
-  color: var(--color-disabled-text);
-  cursor: not-allowed;
+.controls-panel__field--align-end {
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.controls-panel__cart {
+  min-width: 160px;
+}
+
+.form-field--stretch {
+  width: 100%;
 }
 
 main {
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .controls-panel__field--align-end {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .controls-panel__cart {
+    width: 100%;
+  }
 }
 </style>

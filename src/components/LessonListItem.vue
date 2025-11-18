@@ -9,13 +9,34 @@
                 <p><strong>Price:</strong> £{{ lesson.price.toFixed(2) }}</p>
                 <p><strong>Spaces Available:</strong> {{ lesson.spaces }}</p>
             </div>
-            <button
-                class="btn"
-                :disabled="lesson.spaces === 0"
-                @click="$emit('add-to-cart', lesson.id)"
-            >
-                {{ lesson.spaces === 0 ? 'Sold Out' : 'Add to Cart' }}
-            </button>
+            <div class="lesson-card__actions">
+                <div class="lesson-card__quantity">
+                    <button
+                        class="btn btn-secondary btn-sm"
+                        type="button"
+                        :disabled="lesson.reserved === 0"
+                        @click="$emit('decrement', lesson.id)"
+                    >
+                        -
+                    </button>
+                    <span class="lesson-card__quantity-value">{{ lesson.reserved }}</span>
+                    <button
+                        class="btn btn-secondary btn-sm"
+                        type="button"
+                        :disabled="lesson.spaces === 0"
+                        @click="$emit('add-to-cart', lesson.id)"
+                    >
+                        +
+                    </button>
+                </div>
+                <button
+                    class="btn btn-primary"
+                    :disabled="lesson.spaces === 0"
+                    @click="$emit('add-to-cart', lesson.id)"
+                >
+                    {{ lesson.spaces === 0 ? 'Sold Out' : 'Add to Cart' }}
+                </button>
+            </div>
         </div>
     </article>
 </template>
@@ -28,11 +49,10 @@ const props = defineProps({
     lesson: {
         type: Object,
         required: true,
-        validator: (value) => ['id', 'subject', 'location', 'price', 'spaces', 'image'].every((key) => key in value)
+        validator: (value) => ['id', 'subject', 'location', 'price', 'spaces', 'image', 'reserved'].every((key) => key in value)
     }
 });
-
-
+defineEmits(['add-to-cart', 'decrement']);
 
 const optimizedImageUrl = computed(() => optimizeImage(props.lesson.image));
 </script>
@@ -68,6 +88,29 @@ const optimizedImageUrl = computed(() => optimizeImage(props.lesson.image));
     min-height: 250px;
 }
 
+.lesson-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.lesson-card__quantity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--color-background-mute);
+    border-radius: var(--border-radius);
+    padding: 0.35rem 0.6rem;
+}
+
+.lesson-card__quantity-value {
+    min-width: 2rem;
+    text-align: center;
+    font-weight: 600;
+}
+
 .lesson-card__title {
     margin: 0.15rem 0 0.75rem;
     font-size: 1.4rem;
@@ -83,27 +126,4 @@ const optimizedImageUrl = computed(() => optimizeImage(props.lesson.image));
     color: var(--color-text-soft);
 }
 
-.btn {
-    align-self: flex-start;
-    padding: 0.65rem 1.5rem;
-    border-radius: var(--border-radius);
-    border: none;
-    background-color: var(--color-primary);
-    color: var(--color-primary-text);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.btn:hover:not(:disabled) {
-    background-color: var(--color-primary-hover);
-}
-
-.btn:disabled {
-    background-color: var(--color-disabled);
-    color: var(--color-disabled-text);
-    cursor: not-allowed;
-}
 </style>
-
-    min-width: 180px;

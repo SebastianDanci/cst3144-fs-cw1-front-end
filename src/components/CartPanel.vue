@@ -1,32 +1,42 @@
 <template>
   <section class="cart-panel">
     <header class="cart-panel__header">
-      <h2>Shopping Cart</h2>
-      <p v-if="cartItems.length">{{ cartItems.length }} lesson(s) selected</p>
+      <div>
+        <p class="cart-panel__eyebrow">EZLessons</p>
+        <h2>Shopping Cart</h2>
+        <p v-if="cartItems.length" class="cart-panel__count">{{ cartItems.length }} lesson(s) selected</p>
+      </div>
+      <button class="btn btn-secondary btn-sm" type="button" @click="$emit('close-cart')">
+        ← Back to lessons
+      </button>
     </header>
 
     <div v-if="!cartItems.length" class="cart-panel__empty">
       <p>Your cart is empty. Add lessons from the list to get started.</p>
+      <button class="btn btn-primary btn-sm" type="button" @click="$emit('close-cart')">Browse lessons</button>
     </div>
 
     <div v-else class="cart-panel__items">
       <article v-for="item in cartItems" :key="item.lessonId" class="cart-item">
-        <img
-          :src="optimizeImage(item.image)"
-          :alt="item.subject"
-          class="cart-item__thumb"
-          loading="lazy"
-          decoding="async"
-        />
+        <div class="cart-item__media">
+          <img
+            :src="optimizeImage(item.image)"
+            :alt="item.subject"
+            class="cart-item__thumb"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
         <div class="cart-item__details">
           <h3>{{ item.subject }}</h3>
           <p class="cart-item__meta">{{ item.location }}</p>
-          <p>£{{ item.price.toFixed(2) }} each</p>
+          <p class="cart-item__price">£{{ item.price.toFixed(2) }} each</p>
         </div>
         <div class="cart-item__actions">
           <div class="quantity-control">
             <button
-              class="btn"
+              class="btn btn-secondary btn-sm"
+              type="button"
               :disabled="item.quantity <= 1"
               @click="$emit('update-quantity', { lessonId: item.lessonId, quantity: item.quantity - 1 })"
             >
@@ -34,14 +44,15 @@
             </button>
             <span class="quantity-display">{{ item.quantity }}</span>
             <button
-              class="btn"
+              class="btn btn-secondary btn-sm"
+              type="button"
               :disabled="item.quantity >= item.maxAvailable"
               @click="$emit('update-quantity', { lessonId: item.lessonId, quantity: item.quantity + 1 })"
             >
               +
             </button>
           </div>
-          <button class="link" @click="$emit('remove-item', item.lessonId)">Remove</button>
+          <button class="btn btn-link" type="button" @click="$emit('remove-item', item.lessonId)">Remove</button>
         </div>
       </article>
     </div>
@@ -103,7 +114,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update-quantity', 'remove-item', 'checkout']);
+const emit = defineEmits(['update-quantity', 'remove-item', 'checkout', 'close-cart']);
 
 const name = ref('');
 const phone = ref('');
@@ -138,6 +149,10 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding: 1.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-background-soft);
 }
 
 .cart-panel__header {
@@ -145,6 +160,20 @@ watch(
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cart-panel__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  color: var(--color-text-mute);
+  margin-bottom: 0.25rem;
+}
+
+.cart-panel__count {
+  color: var(--color-text-soft);
+  margin-top: 0.25rem;
 }
 
 .cart-panel__empty {
@@ -152,35 +181,55 @@ watch(
   padding: 2rem;
   border: 1px dashed var(--color-border);
   border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
 }
 
 .cart-panel__items {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .cart-item {
   display: grid;
-  grid-template-columns: 80px 1fr auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 1rem;
+  grid-template-columns: minmax(140px, 200px) 1fr auto;
+  gap: 1.25rem;
+  align-items: stretch;
+  padding: 1.25rem;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
+  background-color: var(--color-background);
+  box-shadow: var(--shadow);
+  min-height: 160px;
+}
+
+.cart-item__media {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--border-radius) * 0.8);
+  border: 1px solid var(--color-border);
 }
 
 .cart-item__thumb {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: var(--border-radius);
+  display: block;
+  min-height: 140px;
 }
 
 .cart-item__details {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.cart-item__details h3 {
+  margin: 0;
 }
 
 .cart-item__meta {
@@ -188,11 +237,16 @@ watch(
   margin: 0.15rem 0;
 }
 
+.cart-item__price {
+  font-weight: 600;
+}
+
 .cart-item__actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  justify-content: space-between;
 }
 
 .quantity-control {
@@ -204,6 +258,7 @@ watch(
 .quantity-display {
   min-width: 2rem;
   text-align: center;
+  font-weight: 600;
 }
 
 .cart-panel__footer {
@@ -222,38 +277,32 @@ watch(
 
 .checkout-form input {
   width: 100%;
-  padding: 0.6rem;
-  border-radius: var(--border-radius);
+}
+
+.cart-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
   border: 1px solid var(--color-border);
-  background-color: var(--color-background);
-  color: var(--color-text);
-}
-
-.btn {
-  padding: 0.5rem 1rem;
   border-radius: var(--border-radius);
-  border: 1px solid transparent;
-  background-color: var(--color-background-mute);
-  cursor: pointer;
+  background-color: var(--color-background);
 }
 
-.btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-primary-text);
-}
+@media (max-width: 640px) {
+  .cart-item {
+    grid-template-columns: 1fr;
+  }
 
-.btn:disabled {
-  background-color: var(--color-disabled);
-  color: var(--color-disabled-text);
-  cursor: not-allowed;
-}
+  .cart-item__media {
+    height: 180px;
+  }
 
-.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--color-primary);
-  cursor: pointer;
+  .cart-item__actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
 .field-error {
