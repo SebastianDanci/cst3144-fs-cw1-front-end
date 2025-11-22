@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import HeroSection from './components/HeroSection.vue';
 import LessonList from './components/LessonList.vue';
 import CartPanel from './components/CartPanel.vue';
 
@@ -243,32 +244,13 @@ onMounted(() => {
 
 <template>
   <div class="app-shell">
-    <section class="hero">
-      <div class="hero__content">
-        <p class="hero__eyebrow">EZLessons</p>
-        <h1 class="hero__title">Your shortcut to great tutoring</h1>
-        <p class="hero__subtitle">Browse curated lessons, compare prices in real time, and secure your spot in a couple of taps.</p>
-        <div class="hero__actions">
-          <button @click="toggleTheme" class="btn btn-secondary btn-sm">
-            {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
-          </button>
-        </div>
-      </div>
-      <div class="hero__panel">
-        <div class="stat-card">
-          <p class="stat-card__label">Available lessons</p>
-          <p class="stat-card__value">{{ availableLessonsCount }}</p>
-        </div>
-        <div class="stat-card">
-          <p class="stat-card__label">Items in cart</p>
-          <p class="stat-card__value">{{ cartCount }}</p>
-        </div>
-        <div class="stat-card">
-          <p class="stat-card__label">Total ready</p>
-          <p class="stat-card__value">£{{ cartTotal.toFixed(2) }}</p>
-        </div>
-      </div>
-    </section>
+    <HeroSection
+      :is-dark-mode="isDarkMode"
+      :available-lessons-count="availableLessonsCount"
+      :cart-count="cartCount"
+      :cart-total="cartTotal"
+      @toggle-theme="toggleTheme"
+    />
 
     <section class="controls-panel">
       <div class="controls-panel__field controls-panel__field--grow">
@@ -279,6 +261,7 @@ onMounted(() => {
             type="search"
             class="input"
             placeholder="Search by subject, location, or price"
+            :disabled="showCart"
           />
         </label>
       </div>
@@ -286,7 +269,7 @@ onMounted(() => {
       <div class="controls-panel__field">
         <label class="form-field">
           <span class="form-field__label">Sort Column</span>
-          <select v-model="sortField" class="input">
+          <select v-model="sortField" class="input" :disabled="showCart">
             <option value="subject">Subject</option>
             <option value="location">Location</option>
             <option value="price">Price</option>
@@ -298,7 +281,7 @@ onMounted(() => {
       <div class="controls-panel__field">
         <label class="form-field">
           <span class="form-field__label">Sort Order</span>
-          <select v-model="sortOrder" class="input">
+          <select v-model="sortOrder" class="input" :disabled="showCart">
             <option value="asc">Ascending (A-Z / Low-High)</option>
             <option value="desc">Descending (Z-A / High-Low)</option>
           </select>
@@ -343,73 +326,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-.hero {
-  position: relative;
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  padding: 1.5rem;
-  border-radius: var(--border-radius);
-  background: radial-gradient(circle at top right, var(--color-primary) 0%, transparent 55%),
-    linear-gradient(135deg, var(--color-background-soft), var(--color-background-mute));
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-}
-
-.hero__eyebrow {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-mute);
-}
-
-.hero__title {
-  margin: 0.35rem 0 0.75rem;
-  font-size: clamp(2rem, 5vw, 2.8rem);
-  line-height: 1.15;
-}
-
-.hero__subtitle {
-  color: var(--color-text-soft);
-  max-width: 540px;
-}
-
-.hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.hero__panel {
-  display: flex;
-  gap: 1rem;
-  align-items: stretch;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  padding: 0.9rem 1rem;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-background);
-  box-shadow: var(--shadow);
-  flex: 1 1 150px;
-}
-
-.stat-card__label {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-mute);
-}
-
-.stat-card__value {
-  margin-top: 0.35rem;
-  font-size: 1.65rem;
-  font-weight: 700;
 }
 
 .controls-panel {
