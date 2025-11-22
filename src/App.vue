@@ -4,19 +4,66 @@ import HeroSection from './components/HeroSection.vue';
 import LessonList from './components/LessonList.vue';
 import CartPanel from './components/CartPanel.vue';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'https://cst3144-fs-cw1-back-end.onrender.com';
 
 const isDarkMode = ref(false);
 const showCart = ref(false);
 const lessons = ref([]);
 const lessonLookup = ref({});
 
+const normalizeLessonId = (rawId) => {
+  if (rawId == null) {
+    return undefined;
+  }
+
+  if (typeof rawId === 'string') {
+    return rawId;
+  }
+
+  if (typeof rawId === 'number') {
+    return String(rawId);
+  }
+
+  if (typeof rawId === 'object') {
+    if (typeof rawId.$oid === 'string') {
+      return rawId.$oid;
+    }
+    if (typeof rawId.toHexString === 'function') {
+      return rawId.toHexString();
+    }
+    if (typeof rawId.toString === 'function') {
+      const printed = rawId.toString();
+      return printed === '[object Object]' ? undefined : printed;
+    }
+  }
+
+  return String(rawId);
+};
+
+const normalizeLesson = (lesson, index, existingCache) => {
+  const normalizedId = normalizeLessonId(lesson._id ?? lesson.id ?? lesson.lessonId);
+  if (!normalizedId) {
+    return null;
+  }
+
+  const cached = existingCache[normalizedId];
+  const numericId = typeof lesson.id === 'number' ? lesson.id : cached?.numericId ?? null;
+  const displayId = cached?.displayId ?? numericId ?? index + 1;
+
+  return {
+    ...lesson,
+    id: normalizedId,
+    numericId,
+    displayId
+  };
+};
+
 const updateLessonCache = (lessonId, updates) => {
   const existing = lessonLookup.value[lessonId];
   if (!existing) {
     return;
   }
-  const updatedLesson = { ...existing, ...updates };
+  const updatedLesson = { ...existing, ...updates, id: existing.id, displayId: existing.displayId, numericId: existing.numericId };
   lessonLookup.value = { ...lessonLookup.value, [lessonId]: updatedLesson };
   const index = lessons.value.findIndex((lesson) => lesson.id === lessonId);
   if (index !== -1) {
@@ -50,10 +97,16 @@ const fetchLessons = async (query = '') => {
       throw new Error('Unable to load lessons.');
     }
     const fetchedLessons = await response.json();
-    lessons.value = fetchedLessons;
+    const existingCache = { ...lessonLookup.value };
+    delete existingCache.undefined;
+    const normalizedLessons = fetchedLessons
+      .map((lesson, index) => normalizeLesson(lesson, index, existingCache))
+      .filter(Boolean);
+
+    lessons.value = normalizedLessons;
     lessonLookup.value = {
-      ...lessonLookup.value,
-      ...fetchedLessons.reduce((acc, lesson) => {
+      ...existingCache,
+      ...normalizedLessons.reduce((acc, lesson) => {
         acc[lesson.id] = lesson;
         return acc;
       }, {})

@@ -3,7 +3,7 @@
         <img :src="optimizedImageUrl" :alt="lesson.subject" class="lesson-card__image" loading="lazy" decoding="async" />
         <div class="lesson-card__body">
             <div>
-                <p class="lesson-card__meta">#{{ lesson.id }}</p>
+                <p class="lesson-card__meta">#{{ lesson.displayId ?? lesson.id }}</p>
                 <h3 class="lesson-card__title">{{ lesson.subject }}</h3>
                 <p><strong>Location:</strong> {{ lesson.location }}</p>
                 <p><strong>Price:</strong> £{{ lesson.price.toFixed(2) }}</p>
