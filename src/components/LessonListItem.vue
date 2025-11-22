@@ -7,7 +7,7 @@
                 <h3 class="lesson-card__title">{{ lesson.subject }}</h3>
                 <p><strong>Location:</strong> {{ lesson.location }}</p>
                 <p><strong>Price:</strong> £{{ lesson.price.toFixed(2) }}</p>
-                <p><strong>Spaces Available:</strong> {{ lesson.spaces }}</p>
+                <p><strong>Spaces Available:</strong> {{ lesson.availableSpaces }}</p>
             </div>
             <div class="lesson-card__actions">
                 <div v-if="lesson.reserved > 0" class="lesson-card__quantity">
@@ -23,7 +23,7 @@
                     <button
                         class="btn btn-secondary btn-sm"
                         type="button"
-                        :disabled="lesson.spaces === 0"
+                        :disabled="lesson.availableSpaces === 0"
                         @click="$emit('add-to-cart', lesson.id)"
                     >
                         +
@@ -31,15 +31,15 @@
                 </div>
 
                 <button
-                    v-else-if="lesson.spaces > 0"
                     class="btn btn-primary"
                     type="button"
+                    :disabled="lesson.availableSpaces === 0"
                     @click="$emit('add-to-cart', lesson.id)"
                 >
                     Add to Cart
                 </button>
 
-                <span v-else class="lesson-card__sold-out">Sold Out</span>
+                <span v-if="lesson.spaces === 0" class="lesson-card__sold-out">Sold Out</span>
             </div>
         </div>
     </article>
@@ -53,7 +53,7 @@ const props = defineProps({
     lesson: {
         type: Object,
         required: true,
-        validator: (value) => ['id', 'subject', 'location', 'price', 'spaces', 'image', 'reserved'].every((key) => key in value)
+        validator: (value) => ['id', 'subject', 'location', 'price', 'spaces', 'image', 'reserved', 'availableSpaces'].every((key) => key in value)
     }
 });
 defineEmits(['add-to-cart', 'decrement']);

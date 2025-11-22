@@ -49,7 +49,7 @@ const decoratedLessons = computed(() => {
     return {
       ...lesson,
       reserved,
-      spaces: Math.max(lesson.spaces - reserved, 0)
+      availableSpaces: Math.max(0, lesson.spaces - reserved)
     };
   });
 });
@@ -223,7 +223,6 @@ const handleCheckout = async ({ name, phone }) => {
     cart.value = [];
     checkoutMessage.value = 'Order submitted successfully!';
     checkoutMessageType.value = 'success';
-    showCart.value = false;
     await fetchLessons(searchQuery.value.trim());
   } catch (error) {
     checkoutMessage.value = error.message || 'Checkout failed.';
