@@ -63,17 +63,32 @@
       </div>
 
       <form class="checkout-form" @submit.prevent="submitOrder">
-        <label>
+        <label class="checkout-form__field">
           Name
-          <input v-model="name" type="text" placeholder="Jane Doe" />
+          <input
+            v-model="name"
+            type="text"
+            placeholder="Jane Doe"
+            :class="{ 'input-invalid': name && !isNameValid }"
+            :aria-invalid="name && !isNameValid"
+            autocomplete="name"
+          />
+          <small v-if="name && !isNameValid" class="field-error">Letters and spaces only.</small>
         </label>
-        <small v-if="name && !isNameValid" class="field-error">Letters and spaces only.</small>
 
-        <label>
+        <label class="checkout-form__field">
           Phone
-          <input v-model="phone" type="text" inputmode="numeric" placeholder="07123456789" />
+          <input
+            v-model="phone"
+            type="text"
+            inputmode="numeric"
+            placeholder="07123456789"
+            :class="{ 'input-invalid': phone && !isPhoneValid }"
+            :aria-invalid="phone && !isPhoneValid"
+            autocomplete="tel"
+          />
+          <small v-if="phone && !isPhoneValid" class="field-error">Numbers only.</small>
         </label>
-        <small v-if="phone && !isPhoneValid" class="field-error">Numbers only.</small>
 
         <button class="btn btn-primary" type="submit" :disabled="!canCheckout">
           {{ isSubmitting ? 'Submitting...' : 'Checkout' }}
@@ -276,6 +291,18 @@ watch(
 }
 
 .checkout-form input {
+  width: 100%;
+}
+
+.checkout-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.checkout-form__field .field-error {
+  display: block;
   width: 100%;
 }
 

@@ -9,6 +9,20 @@ const API_BASE = 'http://localhost:3000';
 const isDarkMode = ref(false);
 const showCart = ref(false);
 const lessons = ref([]);
+const lessonLookup = ref({});
+
+const updateLessonCache = (lessonId, updates) => {
+  const existing = lessonLookup.value[lessonId];
+  if (!existing) {
+    return;
+  }
+  const updatedLesson = { ...existing, ...updates };
+  lessonLookup.value = { ...lessonLookup.value, [lessonId]: updatedLesson };
+  const index = lessons.value.findIndex((lesson) => lesson.id === lessonId);
+  if (index !== -1) {
+    lessons.value.splice(index, 1, updatedLesson);
+  }
+};
 const cart = ref([]);
 const searchQuery = ref('');
 const sortField = ref('subject');
@@ -35,7 +49,15 @@ const fetchLessons = async (query = '') => {
     if (!response.ok) {
       throw new Error('Unable to load lessons.');
     }
-    lessons.value = await response.json();
+    const fetchedLessons = await response.json();
+    lessons.value = fetchedLessons;
+    lessonLookup.value = {
+      ...lessonLookup.value,
+      ...fetchedLessons.reduce((acc, lesson) => {
+        acc[lesson.id] = lesson;
+        return acc;
+      }, {})
+    };
   } catch (error) {
     lessonError.value = error.message || 'Failed to load lessons.';
   } finally {
@@ -81,8 +103,18 @@ const availableLessonsCount = computed(() =>
 const cartItemsDetailed = computed(() => {
   return cart.value
     .map((item) => {
-      const lesson = lessons.value.find((lesson) => lesson.id === item.lessonId);
-      if (!lesson) return null;
+      const lesson = lessonLookup.value[item.lessonId];
+      if (!lesson) {
+        return {
+          lessonId: item.lessonId,
+          subject: `Lesson ${item.lessonId}`,
+          location: 'Unavailable',
+          price: 0,
+          image: '',
+          quantity: item.quantity,
+          maxAvailable: item.quantity
+        };
+      }
       return {
         lessonId: item.lessonId,
         subject: lesson.subject,
@@ -101,7 +133,7 @@ const cartTotal = computed(() =>
 );
 
 const addToCart = (lessonId) => {
-  const lesson = lessons.value.find((lesson) => lesson.id === lessonId);
+  const lesson = lessonLookup.value[lessonId];
   if (!lesson) return;
 
   const existing = cart.value.find((item) => item.lessonId === lessonId);
@@ -123,18 +155,19 @@ const addToCart = (lessonId) => {
 };
 
 const updateCartQuantity = ({ lessonId, quantity }) => {
-  const lesson = lessons.value.find((lesson) => lesson.id === lessonId);
   const cartEntry = cart.value.find((item) => item.lessonId === lessonId);
-  if (!lesson || !cartEntry) {
+  if (!cartEntry) {
     return;
   }
+
+  const lesson = lessonLookup.value[lessonId];
 
   if (quantity <= 0) {
     cart.value = cart.value.filter((item) => item.lessonId !== lessonId);
     return;
   }
 
-  if (quantity > lesson.spaces) {
+  if (lesson && quantity > lesson.spaces) {
     checkoutMessage.value = `Only ${lesson.spaces} spaces available for ${lesson.subject}.`;
     checkoutMessageType.value = 'error';
     return;
@@ -209,10 +242,11 @@ const handleCheckout = async ({ name, phone }) => {
 
     await Promise.all(
       payload.items.map(async (item) => {
-        const lesson = lessons.value.find((lesson) => lesson.id === item.lessonId);
+        const lesson = lessonLookup.value[item.lessonId];
         if (!lesson) return;
-        const updatedSpaces = Math.max(lesson.spaces - item.quantity, 0);
-        lesson.spaces = updatedSpaces;
+        const currentSpaces = typeof lesson.spaces === 'number' ? lesson.spaces : 0;
+        const updatedSpaces = Math.max(currentSpaces - item.quantity, 0);
+        updateLessonCache(item.lessonId, { spaces: updatedSpaces });
         await fetch(`${API_BASE}/lessons/${item.lessonId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -322,61 +356,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.controls-panel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-end;
-  padding: 1.5rem;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-background-soft);
-  box-shadow: var(--shadow);
-}
-
-.controls-panel__field {
-  display: flex;
-  align-items: flex-end;
-  flex: 0 1 220px;
-}
-
-.controls-panel__field--grow {
-  flex: 1 1 320px;
-  min-width: 260px;
-}
-
-.controls-panel__field--align-end {
-  justify-content: flex-end;
-  flex: 0 0 auto;
-  margin-left: auto;
-}
-
-.controls-panel__cart {
-  min-width: 160px;
-}
-
-.form-field--stretch {
-  width: 100%;
-}
-
-main {
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .controls-panel__field--align-end {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .controls-panel__cart {
-    width: 100%;
-  }
-}
+/* Component-specific in main.css  */
 </style>

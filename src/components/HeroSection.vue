@@ -45,10 +45,11 @@ defineEmits(['toggle-theme']);
     'content actions'
     'panel panel';
   grid-template-columns: 1fr auto;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   border-radius: var(--border-radius);
-  background: linear-gradient(135deg, var(--color-background-soft), var(--color-background-mute));
+  background-color: var(--color-background-soft);
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
 }
 
 .hero__content {
@@ -88,7 +89,6 @@ defineEmits(['toggle-theme']);
   border: 1px solid var(--color-border);
   background-color: var(--color-background);
   box-shadow: var(--shadow);
-  flex: 1 1 150px;
 }
 
 .stat-card__label {

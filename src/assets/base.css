@@ -4,7 +4,7 @@
   --line-height-base: 1.6;
 
   --border-radius: 12px;
-  --shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   --transition: all 0.3s ease-in-out;
 
   --section-gap: 160px;
@@ -12,44 +12,56 @@
 
 /* Light Theme */
 :root {
-  --color-background: #f8f8f9;
-  --color-background-soft: #ffffff;
-  --color-background-mute: #f1f1f3;
+  --color-background: #e9efff; 
+  --color-background-soft: #ffffff; 
+  --color-background-mute: #dbe4ff;
 
-  --color-text: #1a1a1a;
-  --color-text-soft: #4d4d4d;
-  --color-text-mute: #999999;
+  --color-text: #111827;
+  --color-text-soft: #374151;
+  --color-text-mute: #6b7280;
 
-  --color-border: #e5e5e5;
-  --color-border-hover: #cccccc;
+  --color-border: #c7d2fe;
+  --color-border-hover: #a5b4fc;
 
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
+  --color-primary: #2563eb; 
+  --color-primary-hover: #1d4ed8;
   --color-primary-text: #ffffff;
 
-  --color-disabled: #f1f1f3;
-  --color-disabled-text: #b3b3b3;
+  --color-disabled: #e0e7ff;
+  --color-disabled-text: #9ca3af;
+
+  --focus-ring: rgba(37, 99, 235, 0.2);
+
+  --color-secondary: #dbe4ff;
+  --color-secondary-hover: #c7d2fe;
+  --color-secondary-text: #111827;
 }
 
 /* Dark Theme */
 .dark {
-  --color-background: #1a1a1a;
-  --color-background-soft: #242424;
-  --color-background-mute: #2e2e2e;
+  --color-background: #101827; 
+  --color-background-soft: #1f2937;
+  --color-background-mute: #2c3647;
 
-  --color-text: #f2f2f2;
-  --color-text-soft: #cccccc;
-  --color-text-mute: #808080;
+  --color-text: #f9fafb;
+  --color-text-soft: #d1d5db;
+  --color-text-mute: #9ca3af;
 
-  --color-border: #3a3a3a;
-  --color-border-hover: #4d4d4d;
+  --color-border: #364154;
+  --color-border-hover: #48546b;
 
-  --color-primary: #8a4af3;
-  --color-primary-hover: #753ad9;
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
   --color-primary-text: #ffffff;
 
-  --color-disabled: #2e2e2e;
-  --color-disabled-text: #808080;
+  --color-disabled: #374151;
+  --color-disabled-text: #6b7280;
+
+  --focus-ring: rgba(124, 58, 237, 0.2);
+
+  --color-secondary: #2c3647;
+  --color-secondary-hover: #3b465c;
+  --color-secondary-text: #f9fafb;
 }
 
 *,
@@ -104,10 +116,32 @@ textarea {
   color: var(--color-primary-text);
 }
 
+.btn-primary:hover:not(:disabled),
+.btn-primary:focus-visible {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(1px);
+}
+
 .btn-secondary {
-  background-color: var(--color-background-mute);
-  color: var(--color-text);
+  background-color: var(--color-secondary);
+  color: var(--color-secondary-text);
   border-color: var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-secondary:focus-visible {
+  background-color: var(--color-secondary-hover);
+  border-color: var(--color-border-hover);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background-color: var(--color-secondary-hover);
+  border-color: var(--color-border-hover);
+  transform: translateY(1px);
 }
 
 .btn-ghost {
@@ -116,12 +150,38 @@ textarea {
   color: var(--color-text-soft);
 }
 
+.btn-ghost:hover:not(:disabled),
+.btn-ghost:focus-visible {
+  color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.dark .btn-ghost:hover:not(:disabled),
+.dark .btn-ghost:focus-visible {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.btn-ghost:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 .btn-link {
   background: none;
   border: none;
   padding: 0;
   color: var(--color-primary);
   font-weight: 500;
+}
+
+.btn-link:hover:not(:disabled),
+.btn-link:focus-visible {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.btn-link:active:not(:disabled) {
+  color: var(--color-primary-hover);
+  transform: translateY(1px);
 }
 
 .btn:disabled {
@@ -149,7 +209,22 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.input-invalid,
+input.input-invalid,
+select.input-invalid,
+textarea.input-invalid {
+  border-color: #ef4444;
+}
+
+.input-invalid:focus,
+input.input-invalid:focus,
+select.input-invalid:focus,
+textarea.input-invalid:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
 }
 
 .form-field {
