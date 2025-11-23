@@ -87,7 +87,7 @@
             :aria-invalid="phone && !isPhoneValid"
             autocomplete="tel"
           />
-          <small v-if="phone && !isPhoneValid" class="field-error">Numbers only.</small>
+          <small v-if="phone && !isPhoneValid" class="field-error">Phone number must be at least 10 digits.</small>
         </label>
 
         <button class="btn btn-primary" type="submit" :disabled="!canCheckout">
@@ -135,7 +135,7 @@ const name = ref('');
 const phone = ref('');
 
 const isNameValid = computed(() => /^[a-zA-Z\s]+$/.test(name.value.trim()));
-const isPhoneValid = computed(() => /^\d+$/.test(phone.value.trim()));
+const isPhoneValid = computed(() => /^\d{10,}$/.test(phone.value.trim()));
 
 const canCheckout = computed(() => props.cartItems.length > 0 && isNameValid.value && isPhoneValid.value && !props.isSubmitting);
 
