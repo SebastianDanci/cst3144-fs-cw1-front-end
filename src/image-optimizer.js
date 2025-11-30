@@ -7,7 +7,7 @@ export const optimizeImage = (url) => {
   }
 
   // Avoid rewriting already optimized or local paths
-  if (url.includes('images.weserv.nl') || url.startsWith('/lesson-images')) {
+  if (url.includes('images.weserv.nl') || url.includes('/lesson-images')) {
     return url;
   }
 
