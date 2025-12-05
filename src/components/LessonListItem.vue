@@ -1,7 +1,11 @@
+<!-- LessonListItem: Individual lesson card with add to cart functionality -->
 <template>
     <article class="lesson-card">
-        <img :src="optimizedImageUrl" :alt="lesson.subject" class="lesson-card__image" loading="lazy" decoding="async" />
+        <!-- Lesson Image -->
+        <img :src="optimizedImageUrl" :alt="lesson.subject" class="lesson-card__image" loading="lazy"
+            decoding="async" />
         <div class="lesson-card__body">
+            <!-- Lesson Details -->
             <div>
                 <p class="lesson-card__meta">#{{ lesson.displayId ?? lesson.id }}</p>
                 <h3 class="lesson-card__title">{{ lesson.subject }}</h3>
@@ -9,33 +13,22 @@
                 <p><strong>Price:</strong> £{{ lesson.price.toFixed(2) }}</p>
                 <p><strong>Spaces Available:</strong> {{ lesson.availableSpaces }}</p>
             </div>
+            <!-- Cart Actions -->
             <div class="lesson-card__actions">
                 <div v-if="lesson.reserved > 0" class="lesson-card__quantity">
-                    <button
-                        class="btn btn-secondary btn-sm"
-                        type="button"
-                        :disabled="lesson.reserved === 0"
-                        @click="$emit('decrement', lesson.id)"
-                    >
+                    <button class="btn btn-secondary btn-sm" type="button" :disabled="lesson.reserved === 0"
+                        @click="$emit('decrement', lesson.id)">
                         -
                     </button>
                     <span class="lesson-card__quantity-value">{{ lesson.reserved }}</span>
-                    <button
-                        class="btn btn-secondary btn-sm"
-                        type="button"
-                        :disabled="lesson.availableSpaces === 0"
-                        @click="$emit('add-to-cart', lesson.id)"
-                    >
+                    <button class="btn btn-secondary btn-sm" type="button" :disabled="lesson.availableSpaces === 0"
+                        @click="$emit('add-to-cart', lesson.id)">
                         +
                     </button>
                 </div>
 
-                <button
-                    class="btn btn-primary"
-                    type="button"
-                    :disabled="lesson.availableSpaces === 0"
-                    @click="$emit('add-to-cart', lesson.id)"
-                >
+                <button class="btn btn-primary" type="button" :disabled="lesson.availableSpaces === 0"
+                    @click="$emit('add-to-cart', lesson.id)">
                     Add to Cart
                 </button>
 
@@ -49,6 +42,7 @@
 import { computed } from 'vue';
 import { optimizeImage } from '../image-optimizer.js';
 
+// Lesson prop with validation
 const props = defineProps({
     lesson: {
         type: Object,
@@ -56,8 +50,11 @@ const props = defineProps({
         validator: (value) => ['id', 'subject', 'location', 'price', 'spaces', 'image', 'reserved', 'availableSpaces'].every((key) => key in value)
     }
 });
+
+// Events for cart interactions
 defineEmits(['add-to-cart', 'decrement']);
 
+// Optimized image URL for performance
 const optimizedImageUrl = computed(() => optimizeImage(props.lesson.image));
 </script>
 
@@ -139,5 +136,4 @@ const optimizedImageUrl = computed(() => optimizeImage(props.lesson.image));
     margin: 0.15rem 0;
     color: var(--color-text-soft);
 }
-
 </style>

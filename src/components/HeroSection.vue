@@ -1,14 +1,18 @@
+<!-- HeroSection: Displays app header, theme toggle, and stats -->
 <template>
   <section class="hero">
+    <!-- Branding -->
     <div class="hero__content">
       <p class="hero__eyebrow">EZLessons</p>
       <h1 class="hero__title">After School Classes</h1>
     </div>
+    <!-- Theme Toggle Button -->
     <div class="hero__actions">
-        <button @click="$emit('toggle-theme')" class="btn btn-secondary btn-sm">
-            {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
-        </button>
+      <button @click="$emit('toggle-theme')" class="btn btn-secondary btn-sm">
+        {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+      </button>
     </div>
+    <!-- Stats Panel -->
     <div class="hero__panel">
       <div class="stat-card">
         <p class="stat-card__label">Available lessons</p>
@@ -27,6 +31,7 @@
 </template>
 
 <script setup>
+// Props passed from parent component
 defineProps({
   isDarkMode: Boolean,
   availableLessonsCount: Number,
@@ -34,6 +39,7 @@ defineProps({
   cartTotal: Number
 });
 
+// Emits theme toggle event to parent
 defineEmits(['toggle-theme']);
 </script>
 
@@ -57,10 +63,10 @@ defineEmits(['toggle-theme']);
 }
 
 .hero__actions {
-    grid-area: actions;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
+  grid-area: actions;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 
 .hero__eyebrow {
@@ -105,15 +111,16 @@ defineEmits(['toggle-theme']);
 }
 
 @media (max-width: 480px) {
-    .hero {
-        grid-template-areas:
-            'content'
-            'actions'
-            'panel';
-        grid-template-columns: 1fr;
-    }
-    .hero__actions {
-        justify-content: flex-start;
-    }
+  .hero {
+    grid-template-areas:
+      'content'
+      'actions'
+      'panel';
+    grid-template-columns: 1fr;
+  }
+
+  .hero__actions {
+    justify-content: flex-start;
+  }
 }
 </style>

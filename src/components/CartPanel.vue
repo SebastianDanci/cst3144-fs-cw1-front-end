@@ -1,5 +1,7 @@
+<!-- CartPanel: Shopping cart with checkout form -->
 <template>
   <section class="cart-panel">
+    <!-- Cart Header -->
     <header class="cart-panel__header">
       <div>
         <p class="cart-panel__eyebrow">EZLessons</p>
@@ -11,21 +13,18 @@
       </button>
     </header>
 
+    <!-- Empty Cart State -->
     <div v-if="!cartItems.length" class="cart-panel__empty">
       <p>Your cart is empty. Add lessons from the list to get started.</p>
       <button class="btn btn-primary btn-sm" type="button" @click="$emit('close-cart')">Browse lessons</button>
     </div>
 
+    <!-- Cart Items List -->
     <div v-else class="cart-panel__items">
       <article v-for="item in cartItems" :key="item.lessonId" class="cart-item">
         <div class="cart-item__media">
-          <img
-            :src="optimizeImage(item.image)"
-            :alt="item.subject"
-            class="cart-item__thumb"
-            loading="lazy"
-            decoding="async"
-          />
+          <img :src="optimizeImage(item.image)" :alt="item.subject" class="cart-item__thumb" loading="lazy"
+            decoding="async" />
         </div>
         <div class="cart-item__details">
           <h3>{{ item.subject }}</h3>
@@ -34,21 +33,13 @@
         </div>
         <div class="cart-item__actions">
           <div class="quantity-control">
-            <button
-              class="btn btn-secondary btn-sm"
-              type="button"
-              :disabled="item.quantity <= 1"
-              @click="$emit('update-quantity', { lessonId: item.lessonId, quantity: item.quantity - 1 })"
-            >
+            <button class="btn btn-secondary btn-sm" type="button" :disabled="item.quantity <= 1"
+              @click="$emit('update-quantity', { lessonId: item.lessonId, quantity: item.quantity - 1 })">
               -
             </button>
             <span class="quantity-display">{{ item.quantity }}</span>
-            <button
-              class="btn btn-secondary btn-sm"
-              type="button"
-              :disabled="item.quantity >= item.maxAvailable"
-              @click="$emit('update-quantity', { lessonId: item.lessonId, quantity: item.quantity + 1 })"
-            >
+            <button class="btn btn-secondary btn-sm" type="button" :disabled="item.quantity >= item.maxAvailable"
+              @click="$emit('update-quantity', { lessonId: item.lessonId, quantity: item.quantity + 1 })">
               +
             </button>
           </div>
@@ -57,36 +48,27 @@
       </article>
     </div>
 
+    <!-- Cart Footer with Summary and Checkout Form -->
     <footer class="cart-panel__footer">
+      <!-- Order Total -->
       <div class="cart-summary">
         <p><strong>Total:</strong> £{{ total.toFixed(2) }}</p>
       </div>
 
+      <!-- Checkout Form -->
       <form class="checkout-form" @submit.prevent="submitOrder">
         <label class="checkout-form__field">
           Name
-          <input
-            v-model="name"
-            type="text"
-            placeholder="Jane Doe"
-            :class="{ 'input-invalid': name && !isNameValid }"
-            :aria-invalid="name && !isNameValid"
-            autocomplete="name"
-          />
+          <input v-model="name" type="text" placeholder="Jane Doe" :class="{ 'input-invalid': name && !isNameValid }"
+            :aria-invalid="name && !isNameValid" autocomplete="name" />
           <small v-if="name && !isNameValid" class="field-error">Letters and spaces only.</small>
         </label>
 
         <label class="checkout-form__field">
           Phone
-          <input
-            v-model="phone"
-            type="text"
-            inputmode="numeric"
-            placeholder="07123456789"
-            :class="{ 'input-invalid': phone && !isPhoneValid }"
-            :aria-invalid="phone && !isPhoneValid"
-            autocomplete="tel"
-          />
+          <input v-model="phone" type="text" inputmode="numeric" placeholder="07123456789"
+            :class="{ 'input-invalid': phone && !isPhoneValid }" :aria-invalid="phone && !isPhoneValid"
+            autocomplete="tel" />
           <small v-if="phone && !isPhoneValid" class="field-error">Phone number must be at least 2 digits.</small>
         </label>
 
@@ -106,6 +88,7 @@
 import { computed, ref, watch } from 'vue';
 import { optimizeImage } from '../image-optimizer.js';
 
+// Props for cart data and checkout state
 const props = defineProps({
   cartItems: {
     type: Array,
@@ -129,16 +112,21 @@ const props = defineProps({
   }
 });
 
+// Events for cart actions
 const emit = defineEmits(['update-quantity', 'remove-item', 'checkout', 'close-cart']);
 
+// Form state
 const name = ref('');
 const phone = ref('');
 
+// Form validation
 const isNameValid = computed(() => /^[a-zA-Z\s]+$/.test(name.value.trim()));
 const isPhoneValid = computed(() => /^\d{2,}$/.test(phone.value.trim()));
 
+// Check if form is ready to submit
 const canCheckout = computed(() => props.cartItems.length > 0 && isNameValid.value && isPhoneValid.value && !props.isSubmitting);
 
+// Submit order handler
 const submitOrder = () => {
   if (!canCheckout.value) {
     return;
@@ -146,6 +134,7 @@ const submitOrder = () => {
   emit('checkout', { name: name.value.trim(), phone: phone.value.trim() });
 };
 
+// Reset form when cart is emptied
 watch(
   () => props.cartItems.length,
   (newLength, oldLength) => {
