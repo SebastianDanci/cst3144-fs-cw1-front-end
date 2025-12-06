@@ -17,18 +17,18 @@
             <div class="lesson-card__actions">
                 <div v-if="lesson.reserved > 0" class="lesson-card__quantity">
                     <button class="btn btn-secondary btn-sm" type="button" :disabled="lesson.reserved === 0"
-                        @click="$emit('decrement', lesson.id)">
+                        v-on:click="$emit('decrement', lesson.id)">
                         -
                     </button>
                     <span class="lesson-card__quantity-value">{{ lesson.reserved }}</span>
                     <button class="btn btn-secondary btn-sm" type="button" :disabled="lesson.availableSpaces === 0"
-                        @click="$emit('add-to-cart', lesson.id)">
+                        v-on:click="$emit('add-to-cart', lesson.id)">
                         +
                     </button>
                 </div>
 
                 <button class="btn btn-primary" type="button" :disabled="lesson.availableSpaces === 0"
-                    @click="$emit('add-to-cart', lesson.id)">
+                    v-on:click="$emit('add-to-cart', lesson.id)">
                     Add to Cart
                 </button>
 
